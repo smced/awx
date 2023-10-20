@@ -1,0 +1,28 @@
+--show groups
+SELECT 
+		main_group.name
+	   , main_group.id
+	   ,count(*)
+	   ,25-count(*)
+FROM main_group_hosts 
+					 full outer join main_group on main_group_hosts.group_id = main_group.id
+WHERE 1=1 
+--AND main_group.inventory_id  = 43 
+AND main_group.inventory_id  = 56
+GROUP BY main_group.id,main_group.name
+order by 1;
+
+SELECT id
+	, name
+	, 'insert into main_group_hosts (group_id, host_id) VALUES (82 ,' ||id || ');'
+FROM main_host
+WHERE inventory_id =56
+AND id NOT IN (select host_id from main_group_hosts)
+LIMIT 25;
+
+
+select 'update main_host set enabled = ''f'' where id = ' || host_id || ';' as update1
+  ,host_name, host_id , failed
+from main_jobhostsummary
+where main_jobhostsummary.job_id = 1229
+and failed = 't';
