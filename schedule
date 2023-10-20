@@ -1,0 +1,65 @@
+--show groups
+SELECT 
+		main_group.name
+	   , main_group.id
+	   ,count(*)
+	   ,25-count(*)
+FROM main_group_hosts 
+					 full outer join main_group on main_group_hosts.group_id = main_group.id
+WHERE 1=1 
+--AND main_group.inventory_id  = 43 
+AND main_group.inventory_id  = 56
+AND main_group.name like '%ETH%'
+GROUP BY main_group.id,main_group.name
+order by 1;
+
+
+--format: PETERBOROUGH_ETH_SCHED_26
+--You need a good template record to copy - SELECT id, name FROM main_schedule where id> 10 order by 1;
+
+DO $$
+DECLARE 
+	x   text:=       chr(39) ||  'ATLANTA_ETH_SCHED_01'|| chr(39);
+	x2  text:=  chr(39) || E'{"limit": "ATLANTA_ETH_01"}' || chr(39);
+	
+	h1 text:= '20';
+	h2 text:= '05';
+	
+	t1 text:=               chr(39) ||      '2023-09-07 '||h1||':55:00+00'|| chr(39);
+	t2  text:=  chr(39) || 'DTSTART;TZID=America/New_York:20230908T' || 1545 || '00 RRULE:INTERVAL=1;FREQ=WEEKLY;BYDAY=FR'|| chr(39);
+	result text;
+BEGIN
+	result := (select CHR(10)||'INSERT INTO main_schedule (created,modified,name,description,enabled,dtstart,rrule,next_run,extra_data,created_by_id,modified_by_id,unified_job_template_id,char_prompts,survey_passwords)'
+	||CHR(10)||
+	'SELECT current_timestamp 			as created
+		,current_timestamp              as modified
+		,' || x || '                    as name
+		,' || x || '					as description
+		,enabled						
+		,current_timestamp				as dtstart
+		,'|| t2   || '					as rrule
+		,'|| t1   || '					as next_run
+		,extra_data,created_by_id,modified_by_id,unified_job_template_id
+		,' || x2 || '                   as char_prompts       -- AKA LIMIT
+		,survey_passwords 
+		FROM main_schedule 
+		where id=13;');
+	
+	RAISE NOTICE 'data: %,' , result;
+END $$;
+
+SELECT 
+	 id                     
+	,description            
+	,name                   
+	,enabled                
+	,dtstart                
+	,dtend                  
+	,rrule                  
+	,next_run               
+	,extra_data             
+	,created_by_id          
+	,modified_by_id         
+	,unified_job_template_id
+	,char_prompts           
+FROM main_schedule order by 1 desc limit 5;
