@@ -63,3 +63,43 @@ SELECT
 	,unified_job_template_id
 	,char_prompts           
 FROM main_schedule order by 1 desc limit 5;
+
+
+
+DO $$
+DECLARE 
+    a   text:=   '12';
+	x   text:=       'MILWAUKEE_ETH_SCHED_' ||a;
+	y   text:=       E'{"limit": "MILWAUKEE_ETH_' || a || '"}';
+	z   text:=       '1730';
+BEGIN
+INSERT INTO main_schedule (created,modified,name,description,enabled,dtstart,rrule,next_run,extra_data,created_by_id,modified_by_id,unified_job_template_id,char_prompts,survey_passwords) 
+SELECT   current_timestamp 			    as created
+		,current_timestamp              as modified
+		, x       as name
+		, x		  as description
+		,'t'                            as enabled						
+		,'2023-10-30 12:00:00+00'	    as dtstart
+		,'DTSTART;TZID=America/New_York:20231020T' ||z ||'00 RRULE:INTERVAL=1;FREQ=WEEKLY;BYDAY=TU'					as rrule
+		,'2023-10-31 21:30:00+00'		as next_run
+		,'{}'        					as extra_data
+		,1                              as created_by_id
+		,1                              as modified_by_id
+		,(SELECT id 
+		  FROM main_unifiedjobtemplate 
+		  WHERE name ilike 'Generic - EtherNetIP - Inventory') as   unified_job_template_id
+		,y                              as char_prompts       -- AKA LIMIT
+		,'{}'        					as survey_passwords ;	
+END $$;	
+
+
+
+
+
+
+
+
+
+
+
+
