@@ -1,0 +1,5 @@
+select 'update main_host set enabled = ''f'' where id = ' || host_id || ';' as update1
+  ,host_name, host_id , failed
+from main_jobhostsummary
+where main_jobhostsummary.job_id = 924
+and failed = 't';
