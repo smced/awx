@@ -1,0 +1,49 @@
+insert into main_host (created	,modified ,description , name,enabled,instance_id,created_by_id,inventory_id,modified_by_id,variables,ansible_facts) VALUES (current_timestamp,current_timestamp,' ', '10.20.7.111','t','', 1,56,1,'---',E'{}'::json); 
+
+  insert into main_host (created	,modified ,description , name,enabled,instance_id,created_by_id,inventory_id,modified_by_id,variables,ansible_facts) VALUES (current_timestamp,current_timestamp,' ', '10.20.7.12','t','', 1,56,1,'---',E'{}'::json);  
+  
+--MAIN insert
+SELECT id
+	, name
+	, 'insert into main_group_hosts (group_id, host_id) VALUES (103 ,' ||id || ');'
+FROM main_host
+WHERE inventory_id = 56
+AND id NOT IN (select host_id from main_group_hosts)
+and name like '10.20%'
+LIMIT 25;
+
+
+
+  --Get count of objects in groups
+SELECT 
+		main_group.name
+	   , main_group_hosts.group_id
+	   ,count(*)
+	   ,25-count(*)
+FROM main_group_hosts 
+					 full outer join main_group on main_group_hosts.group_id = main_group.id
+WHERE 1=1 
+AND main_group.inventory_id  = 56 
+--AND main_group.name like 'MLC%'
+GROUP BY main_group_hosts.group_id,main_group.name
+order by 1;
+
+
+--Pick a group to add to 
+       name        | group_id | count | ?column?
+-------------------+----------+-------+----------
+ SOUTH_BEND_ETH_01 |       84 |    29 |       -4
+ SOUTH_BEND_ETH_02 |       94 |    30 |       -5
+ SOUTH_BEND_ETH_03 |       95 |    30 |       -5
+ SOUTH_BEND_ETH_04 |       96 |    30 |       -5
+ SOUTH_BEND_ETH_05 |       97 |     7 |       18
+
+--MAIN insert
+SELECT id
+	, name
+	, 'insert into main_group_hosts (group_id, host_id) VALUES (103 ,' ||id || ');'
+FROM main_host
+WHERE inventory_id = 56
+AND id NOT IN (select host_id from main_group_hosts)
+and name like '10.20%'
+LIMIT 25;
