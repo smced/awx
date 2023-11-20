@@ -1,0 +1,36 @@
+DO $$ 
+DECLARE
+    i INT;
+BEGIN
+    FOR i IN 1..255 LOOP
+		DECLARE 
+			v_name text := '192.168.101.' || i || 'V';
+			v_variables text := E'{"ansible_host":"192.168.101.119","cip_route_path":"3/192.168.101.' || i || '"}';
+			v_ansible_facts jsonb := '{}';
+		BEGIN
+			INSERT INTO main_host (created, modified, name, description, enabled, instance_id, created_by_id, inventory_id, modified_by_id, variables, ansible_facts)
+			VALUES (current_timestamp, current_timestamp, v_name, '', 'y', '', 1, 38, 1, v_variables, v_ansible_facts);
+		END;
+	END LOOP;
+END $$;
+
+select id,name,variables  from main_host where created >= NOW() - INTERVAL '1 hours';
+
+-- x delete from main_host where created >= NOW() - INTERVAL '1 hours';
+
+
+
+
+--NEED TO MAKE THIS A FUNCTION
+--two choices, second was to rebuild the group afte I broke it
+-- now is in multiple paste steps, group gets smaller
+
+SELECT main_host.id
+	, main_host.name
+	, 'insert into main_group_hosts (group_id, host_id) VALUES (94 ,' ||main_host.id || ');'
+FROM main_host
+		left outer join main_group_hosts on main_host.id = main_group_hosts.host_id
+WHERE inventory_id =38
+--AND id IN (select id from main_host where name like '192.168.101.119.%V');
+AND main_host.id IN (select id from main_host where created >= NOW() - INTERVAL '1 hours')
+and main_group_hosts.host_id is null;
