@@ -1,0 +1,256 @@
+
+DO $$ 
+DECLARE
+    i INT;
+BEGIN
+    FOR i IN 5..255 LOOP
+		DECLARE 
+			v_name text := '192.168.101.' || i || 'V';
+			v_variables text := E'{"ansible_host":"199.199.199.35","cip_route_path":"3/192.168.101.' || i || '"}';
+			v_ansible_facts jsonb := '{}';
+		BEGIN
+			INSERT INTO main_host (created, modified, name, description, enabled, instance_id, created_by_id, inventory_id, modified_by_id, variables, ansible_facts)
+			VALUES (current_timestamp, current_timestamp, v_name, '', 'y', '', 1, 38, 1, v_variables, v_ansible_facts);
+		END;
+	END LOOP;
+END $$;
+
+-- Now how do I easily group
+SELECT 
+		main_group.name
+	   , main_group.id
+	   ,count(*)
+FROM main_group_hosts 
+					 full outer join main_group on main_group_hosts.group_id = main_group.id
+WHERE 1=1 
+AND main_group.inventory_id  = 38 
+--AND main_group.name like 'MLC%'
+GROUP BY 
+	 main_group_hosts.group_id
+	,main_group.id
+order by 1;
+
+
+ID = 93
+
+---
+so for 
+	each item in (select name from main_host where name like '192.168.101.%V';
+
+--NEED TO MAKE THIS A FUNCTION
+--two choices, second was to rebuild the group afte I broke it
+SELECT id
+	, name
+	, 'insert into main_group_hosts (group_id, host_id) VALUES (93 ,' ||id || ');'
+FROM main_host
+WHERE inventory_id =38
+--AND id IN (select id from main_host where name like '192.168.101.%V');
+AND id IN (select id from main_host where created >= NOW() - INTERVAL '4 hours');
+
+
+ 
+
+
+
+
+--fix bad
+select 'update main_host set enabled = ''f'' where id = ' || host_id || ';' as update1
+  ,host_name, host_id , failed
+from main_jobhostsummary
+where main_jobhostsummary.job_id = 120
+and failed = 't';
+
+
+select count(*) from main_jobhostsummary where main_jobhostsummary.job_id = 120 and failed = 'f';
+
+## GET HOSTNAME
+select host_name from main_jobhostsummary where main_jobhostsummary.job_id = 120 and failed = 'f';
+
+## Get data from main_host
+
+select name
+	--, variables
+	--, ansible_facts->>'lifecycle_identifier'
+	, 'UPDATE main_host set name = ' || CHR(39) || (ansible_facts->>'lifecycle_identifier')::text || CHR(39) || ' where id = ' || id || ';'
+	--, left(ansible_facts::text,300)
+from main_host
+where name in (select host_name from main_jobhostsummary where main_jobhostsummary.job_id = 125 and failed = 'f')
+order by id;
+
+
+## REMOVE BAD from group  (BROKEN)
+select 'DELETE FROM main_group_hosts where id = ' || main_jobhostsummary.host_id || ';' as remove_group
+from main_jobhostsummary
+where 1=1 
+AND main_jobhostsummary.job_id = 120
+AND main_jobhostsummary.host_id in (select main_group_hosts.id from main_group_hosts)
+and main_jobhostsummary.failed = 't'
+order by main_jobhostsummary.host_id;
+
+
+
+
+
+## REMOVE BAD HOST
+select 'DELETE FROM main_group_hosts where id = ' || host_id || ';' as remove_group
+from main_jobhostsummary
+where main_jobhostsummary.job_id = 120
+and failed = 't';
+
+
+
+
+
+DO $$ 
+DECLARE
+    i INT;
+BEGIN
+    FOR i IN 2..4 LOOP
+		DECLARE 
+			v_name text := '192.168.101.' || i || 'V';
+			v_variables text := E'{"ansible_host":"199.199.199.35","cip_route_path":"3/192.168.101.' || i || '"}';
+			v_ansible_facts jsonb := '{}';
+		BEGIN
+			INSERT INTO main_host (created, modified, name, description, enabled, instance_id, created_by_id, inventory_id, modified_by_id, variables, ansible_facts)
+			VALUES (current_timestamp, current_timestamp, v_name, '', 'y', '', 1, 38, 1, v_variables, v_ansible_facts);
+		END;
+	END LOOP;
+END $$;
+
+
+
+
+DO $$ 
+DECLARE
+    i INT;
+BEGIN
+    FOR i IN 2..254 LOOP
+        INSERT INTO your_table_name (x) VALUES (i);
+    END LOOP;
+END $$;
+
+
+
+
+I have a table x with a field called x, in postgres write a loop that inserts the number 2-254 into that table
+
+
+
+DO $$
+DECLARE 
+    a   text:=   '06';
+	x   text:=       'MILWAUKEE_ETH_DISC_SCHED_' ||a;
+	y   text:=       E'{"limit": "MILWAUKEE_ETH_SCAN_' || a || '"}';
+	z   text:=       '1230';
+BEGIN
+INSERT INTO main_schedule (created,modified,name,description,enabled,dtstart,rrule,next_run,extra_data,created_by_id,modified_by_id,unified_job_template_id,char_prompts,survey_passwords) 
+SELECT   current_timestamp 			    as created
+		,current_timestamp              as modified
+		, x       as name
+		, x		  as description
+		,'t'                            as enabled						
+		,'2023-10-30 12:00:00+00'	    as dtstart
+		,'DTSTART;TZID=America/New_York:20231020T' ||z ||'00 RRULE:INTERVAL=1;FREQ=WEEKLY;BYDAY=WE'					as rrule
+		,'2023-10-31 21:30:00+00'		as next_run
+		,'{}'        					as extra_data
+		,1                              as created_by_id
+		,1                              as modified_by_id
+		,(SELECT id 
+		  FROM main_unifiedjobtemplate 
+		  --WHERE name ilike 'Generic - EtherNetIP - Inventory') as   unified_job_template_id
+		  WHERE name ilike 'Generic - EtherNetIP - Discovery') as   unified_job_template_id 
+		,y                              as char_prompts       -- AKA LIMIT
+		,'{}'        					as survey_passwords ;	
+END $$;	
+
+
+
+
+
+select created	,modified ,description , name,enabled,instance_id,created_by_id,inventory_id,modified_by_id,variables from main_host where name like '192.168.101.131V';
+
+
+insert into main_host (created	,modified ,description , name,enabled,instance_id,created_by_id,inventory_id,modified_by_id,variables,ansible_facts) VALUES (current_timestamp,current_timestamp,' ', '10.20.7.111','t','', 1,56,1,'---',E'{}'::json); 
+
+  insert into main_host (created	,modified ,description , name,enabled,instance_id,created_by_id,inventory_id,modified_by_id,variables,ansible_facts) VALUES (current_timestamp,current_timestamp,' ', '10.20.7.12','t','', 1,56,1,'---',E'{}'::json);  
+  
+INVENTORY_ID =38 
+ 
+ 
+ 
+ 
+insert into main_host (created	,modified ,description , name,enabled,instance_id,created_by_id,inventory_id,modified_by_id,variables,ansible_facts) VALUES (current_timestamp,current_timestamp,' ', '10.20.7.111','t','', 1,56,1,'---',E'{}'::json);  
+ 
+ 
+ 
+	
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ {"ansible_host":"199.199.199.35","cip_route_path":"3/192.168.101.131"}
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+--MAIN insert
+SELECT id
+	, name
+	, 'insert into main_group_hosts (group_id, host_id) VALUES (103 ,' ||id || ');'
+FROM main_host
+WHERE inventory_id = 56
+AND id NOT IN (select host_id from main_group_hosts)
+and name like '10.20%'
+LIMIT 25;
+
+
+
+  --Get count of objects in groups
+SELECT 
+		main_group.name
+	   , main_group_hosts.group_id
+	   ,count(*)
+	   ,25-count(*)
+FROM main_group_hosts 
+					 full outer join main_group on main_group_hosts.group_id = main_group.id
+WHERE 1=1 
+AND main_group.inventory_id  = 56 
+--AND main_group.name like 'MLC%'
+GROUP BY main_group_hosts.group_id,main_group.name
+order by 1;
+
+
+--Pick a group to add to 
+       name        | group_id | count | ?column?
+-------------------+----------+-------+----------
+ SOUTH_BEND_ETH_01 |       84 |    29 |       -4
+ SOUTH_BEND_ETH_02 |       94 |    30 |       -5
+ SOUTH_BEND_ETH_03 |       95 |    30 |       -5
+ SOUTH_BEND_ETH_04 |       96 |    30 |       -5
+ SOUTH_BEND_ETH_05 |       97 |     7 |       18
+
+--MAIN insert
+SELECT id
+	, name
+	, 'insert into main_group_hosts (group_id, host_id) VALUES (103 ,' ||id || ');'
+FROM main_host
+WHERE inventory_id = 56
+AND id NOT IN (select host_id from main_group_hosts)
+and name like '10.20%'
+LIMIT 25;
